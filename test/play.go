@@ -1,11 +1,11 @@
 package main
 
 import (
-	abolish "abolish"
+	ab "abolish"
 	"fmt"
 )
 
-var rule = abolish.StringToRules("struct:test")
+var rule = ab.StringToRules("required|exact:hello")
 
 type DataType struct {
 	Name string `json:"name"`
@@ -14,13 +14,13 @@ type DataType struct {
 func main() {
 	addValidators()
 
-	//var text = "testd"
+	//var text = "test"
 	// print address of text
-	data := DataType{
-		Name: "My name is ewo!",
-	}
+	//data := DataType{
+	//	Name: "My name is ewo!",
+	//}
 
-	err := abolish.Validate[DataType](data, &rule)
+	err := ab.Validate[string]("", &rule)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -32,31 +32,34 @@ func main() {
 
 func addValidators() {
 	// struct validator
-	err := abolish.RegisterValidator(abolish.Validator[any]{
-		Name: "struct",
-		Validate: func(value any, option *any) *abolish.ValidationError {
-			// convert value to DataType struct
-			//data, ok := value.(DataType)
-			//if !ok {
-			//	return &abolish.ValidationError{
-			//		Message: "value is not a struct",
-			//	}
-			//}
+	err := ab.RegisterValidator(func() ab.Validator[any] {
+		vErr := &ab.ValidationError{
+			Validator: "required",
+			Code:      "required",
+			Message:   "This field is required",
+		}
 
-			fmt.Println("struct validator called")
-			fmt.Println("value:", value)
-			fmt.Println("option:", *option)
-			return nil
-		},
-	})
+		return ab.Validator[any]{
+			Name:  "required",
+			Error: *vErr,
+			Validate: func(value any, option *any) *ab.ValidationError {
+				// check if value is nil
+				if value == nil {
+					return vErr
+				}
+
+				return nil
+			},
+		}
+	}())
 
 	// exact validator
-	err = abolish.RegisterValidator(abolish.Validator[string]{
+	err = ab.RegisterValidator(ab.Validator[string]{
 		Name: "exact",
-		Validate: func(value string, option *any) *abolish.ValidationError {
+		Validate: func(value string, option *any) *ab.ValidationError {
 
 			if value != *option {
-				return &abolish.ValidationError{
+				return &ab.ValidationError{
 					Message: fmt.Sprintf("value must be exactly %v", *option),
 				}
 			}

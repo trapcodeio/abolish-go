@@ -6,6 +6,7 @@ import (
 )
 
 type Map map[string]interface{}
+type Any interface{}
 
 type ValidatorFunc[T any] func(value T, option *any) *ValidationError
 
@@ -22,8 +23,8 @@ func (e ValidationError) Error() string {
 type Validator[T any] struct {
 	Name        string
 	Validate    ValidatorFunc[T]
-	description string
-	error       ValidationError
+	Description string
+	Error       ValidationError
 }
 
 var validators = make(map[string]any)
@@ -74,12 +75,12 @@ func Validate[T any](variable T, rules *Rules) error {
 		if !HasValidator(validatorName) {
 			return &ValidationError{
 				Code:    "validation",
-				Message: "validatorName does not exist",
+				Message: fmt.Sprintf("validator [%v] does not exist.", validatorName),
 			}
 		}
 
 		// get validator
-		validator, ok := validators[validatorName].(Validator[T])
+		validator, ok := validators[validatorName].(Validator[any])
 		if !ok {
 			// get real type of validator
 			validatorType := fmt.Sprintf("%T", validators[validatorName])
