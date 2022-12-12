@@ -5,58 +5,47 @@ import (
 	"fmt"
 )
 
-var rule = ab.StringToRules("required|exact:hello")
-
-type DataType struct {
-	Name string `json:"name"`
-}
-
 func main() {
 	addValidators()
+	rule, err := ab.StringToRulesCompiled("required|exact:hello")
+	if err != nil {
+		panic(err)
+	}
 
-	//var text = "test"
-	// print address of text
-	//data := DataType{
-	//	Name: "My name is ewo!",
-	//}
-
-	err := ab.Validate[string]("", &rule)
+	err = ab.Validate[any](nil, &rule)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
 
-	//fmt.Println(abolish.StringToRules(`required|email:"hello"`))
-	//fmt.Println(abolish.StringToRules(`required|email:'hello'`))
-	//fmt.Println(abolish.StringToRules("required|email:`hello`"))
+	err = ab.Validate[string]("", &rule)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 }
 
 func addValidators() {
 	// struct validator
-	err := ab.RegisterValidator(func() ab.Validator[any] {
-		vErr := &ab.ValidationError{
+	err := ab.RegisterValidator(ab.Validator{
+		Name: "required",
+		Error: &ab.ValidationError{
 			Validator: "required",
 			Code:      "required",
 			Message:   "This field is required",
-		}
+		},
+		Validate: func(value any, option *any) *ab.ValidationError {
+			// check if value is nil
+			if value == nil {
+				return ab.DefaultError
+			}
 
-		return ab.Validator[any]{
-			Name:  "required",
-			Error: *vErr,
-			Validate: func(value any, option *any) *ab.ValidationError {
-				// check if value is nil
-				if value == nil {
-					return vErr
-				}
-
-				return nil
-			},
-		}
-	}())
+			return nil
+		},
+	})
 
 	// exact validator
-	err = ab.RegisterValidator(ab.Validator[string]{
+	err = ab.RegisterValidator(ab.Validator{
 		Name: "exact",
-		Validate: func(value string, option *any) *ab.ValidationError {
+		Validate: func(value any, option *any) *ab.ValidationError {
 
 			if value != *option {
 				return &ab.ValidationError{
@@ -69,6 +58,6 @@ func addValidators() {
 	})
 
 	if err != nil {
-		return
+		fmt.Println("Error:", err)
 	}
 }

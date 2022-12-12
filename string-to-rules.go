@@ -1,6 +1,7 @@
 package abolish
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -84,4 +85,21 @@ func StringToRules(str string) Rules {
 	}
 
 	return rules
+}
+
+func StringToRulesCompiled(str string) (Rules, error) {
+	Map := StringToRules(str)
+
+	// get all keys from map
+	for k := range StringToRules(str) {
+		// check if key is a validator
+		if !HasValidator(k) {
+			return Map, &ValidationError{
+				Code:    "validation",
+				Message: fmt.Sprintf("validator [%v] does not exist.", k),
+			}
+		}
+	}
+
+	return Map, nil
 }

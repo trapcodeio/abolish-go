@@ -8,7 +8,7 @@ import (
 type Map map[string]interface{}
 type Any interface{}
 
-type ValidatorFunc[T any] func(value T, option *any) *ValidationError
+type ValidatorFunc func(value any, option *any) *ValidationError
 
 type ValidationError struct {
 	Validator string
@@ -20,16 +20,20 @@ func (e ValidationError) Error() string {
 	return e.Message
 }
 
-type Validator[T any] struct {
+var DefaultError = &ValidationError{
+	Code: "__DEFAULT_ERROR__",
+}
+
+type Validator struct {
 	Name        string
-	Validate    ValidatorFunc[T]
+	Validate    ValidatorFunc
 	Description string
-	Error       ValidationError
+	Error       *ValidationError
 }
 
 var validators = make(map[string]any)
 
-func RegisterValidator[T any](v Validator[T]) error {
+func RegisterValidator(v Validator) error {
 	// check if v already exists
 	if _, ok := validators[v.Name]; ok {
 		return errors.New("validator already exists")
@@ -40,7 +44,8 @@ func RegisterValidator[T any](v Validator[T]) error {
 	return nil
 }
 
-func RegisterValidators(validators []Validator[any]) error {
+//goland:noinspection GoUnusedExportedFunction
+func RegisterValidators(validators []Validator) error {
 	for _, v := range validators {
 		err := RegisterValidator(v)
 		if err != nil {
@@ -51,7 +56,8 @@ func RegisterValidators(validators []Validator[any]) error {
 	return nil
 }
 
-func ReplaceValidator(name string, v Validator[any]) error {
+//goland:noinspection GoUnusedExportedFunction
+func ReplaceValidator(name string, v Validator) error {
 	// check if v already exists
 	if _, ok := validators[name]; !ok {
 		return errors.New("validator does not exist")
@@ -80,7 +86,7 @@ func Validate[T any](variable T, rules *Rules) error {
 		}
 
 		// get validator
-		validator, ok := validators[validatorName].(Validator[any])
+		validator, ok := validators[validatorName].(Validator)
 		if !ok {
 			// get real type of validator
 			validatorType := fmt.Sprintf("%T", validators[validatorName])
@@ -94,7 +100,12 @@ func Validate[T any](variable T, rules *Rules) error {
 		// run validatorName
 		err := validator.Validate(variable, &option)
 		if err != nil {
-			err.Validator = validator.Name
+			if err == DefaultError {
+				return validator.Error
+			} else if err.Validator == "" {
+				err.Validator = validator.Name
+			}
+
 			return err
 		}
 	}
