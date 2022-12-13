@@ -61,19 +61,24 @@ func Test_Exact(t *testing.T) {
 
 	// check string
 	rule := ab.StringToRules("exact:hello")
-	err = ab.Validate[string]("hello", &rule)
+	err = ab.Validate("hello", &rule)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	err = ab.Validate("world", &rule)
+	if err == nil {
+		t.Fatal("Expects validation to fail!")
 	}
 
 	// check number
 	rule = ab.Rules{"exact": 10}
-	err = ab.Validate[int](10, &rule)
+	err = ab.Validate(10, &rule)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = ab.Validate[int](20, &rule)
+	err = ab.Validate(20, &rule)
 	if err == nil {
 		t.Fatal("Expects validation to fail!")
 	}
