@@ -41,19 +41,24 @@ type Validator struct {
 	Error       *ValidationError
 }
 
-// validators - abolish validators map
+// validatorsMap - abolish validatorsMap map
 // key: validator name
 // value: validator
-var validators = make(map[string]Validator)
+var validatorsMap = make(map[string]Validator)
 
 // HasValidator - check if validator a validator exists
 func HasValidator(name string) bool {
-	_, ok := validators[name]
+	_, ok := validatorsMap[name]
 	return ok
 }
 
 // RegisterValidator - register a validator
 func RegisterValidator(v Validator) error {
+	// check if name is empty
+	if v.Name == "" {
+		return errors.New("validator name cannot be empty")
+	}
+
 	// check if v already exists
 	if HasValidator(v.Name) {
 		return errors.New("validator already exists")
@@ -84,12 +89,12 @@ func RegisterValidator(v Validator) error {
 	}
 
 	// register validator
-	validators[v.Name] = v
+	validatorsMap[v.Name] = v
 
 	return nil
 }
 
-// RegisterValidators - register multiple validators
+// RegisterValidators - register multiple validatorsMap
 func RegisterValidators(validators []Validator) error {
 	for _, v := range validators {
 		err := RegisterValidator(v)
@@ -101,6 +106,17 @@ func RegisterValidators(validators []Validator) error {
 	return nil
 }
 
+// GetRegisteredValidator - get a validator
+func GetRegisteredValidator(name string) (Validator, error) {
+
+	validator, ok := validatorsMap[name]
+	if !ok {
+		return Validator{}, errors.New("validator does not exist")
+	}
+
+	return validator, nil
+}
+
 // ReplaceValidator - replace a validator
 func ReplaceValidator(name string, v Validator) error {
 	// check if v already exists
@@ -109,20 +125,20 @@ func ReplaceValidator(name string, v Validator) error {
 	}
 
 	// delete old validator
-	delete(validators, name)
+	delete(validatorsMap, name)
 
 	// register new validator
 	return RegisterValidator(v)
 }
 
-// removeAllValidators - remove all validators
+// removeAllValidators - remove all validatorsMap
 func removeAllValidators() {
-	validators = make(map[string]Validator)
+	validatorsMap = make(map[string]Validator)
 }
 
 // removeValidator - remove a validator
 func removeValidator(name string) {
-	delete(validators, name)
+	delete(validatorsMap, name)
 }
 
 // Validate - validate a value
@@ -141,10 +157,10 @@ func Validate[T any](value T, rules *Rules) error {
 		}
 
 		// get validator
-		validator, ok := validators[validatorName]
+		validator, ok := validatorsMap[validatorName]
 		if !ok {
 			// get real type of validator
-			validatorType := fmt.Sprintf("%T", validators[validatorName])
+			validatorType := fmt.Sprintf("%T", validatorsMap[validatorName])
 
 			return &ValidationError{
 				Code:    "validation",
