@@ -3,6 +3,7 @@ package abolish
 import (
 	"errors"
 	"fmt"
+	"github.com/gookit/goutil/arrutil"
 	"strings"
 )
 
@@ -13,7 +14,7 @@ type Map map[string]interface{}
 type Any interface{}
 
 // ValidatorFunc - abolish validator function
-type ValidatorFunc func(value any, option *any) *ValidationError
+type ValidatorFunc func(value any, option any) *ValidationError
 
 // ValidationError - abolish validation error
 type ValidationError struct {
@@ -39,6 +40,7 @@ type Validator struct {
 	Validate    ValidatorFunc
 	Description string
 	Error       *ValidationError
+	ValueTypes  *[]string
 }
 
 // validatorsMap - abolish validatorsMap map
@@ -141,10 +143,18 @@ func removeValidator(name string) {
 	delete(validatorsMap, name)
 }
 
+func TypeOf(value Any) string {
+	return fmt.Sprintf("%T", value)
+}
+
 // Validate - validate a value
 // value: value to validate
 // rules: rules to validate value with
 func Validate[T any](value T, rules *Rules) error {
+	// get value type
+	// check if type is nil using reflect
+
+	valueType := TypeOf(value)
 
 	// loop through rules
 	for validatorName, option := range *rules {
@@ -163,13 +173,25 @@ func Validate[T any](value T, rules *Rules) error {
 			validatorType := fmt.Sprintf("%T", validatorsMap[validatorName])
 
 			return &ValidationError{
-				Code:    "validation",
-				Message: fmt.Sprintf("validator [%v] is expecting [%v] but got [%T] instead", validatorName, validatorType, value),
+				Code:      validator.Error.Code,
+				Validator: validator.Error.Validator,
+				Message:   fmt.Sprintf("validator [%v] is expecting [%v] but got [%T] instead", validatorName, validatorType, value),
+			}
+		}
+
+		// if validator has valueTypes, check if value is of the correct type
+		if validator.ValueTypes != nil {
+			// check if value type is in valueTypes
+			if !arrutil.Contains(*validator.ValueTypes, valueType) {
+				return &ValidationError{
+					Code:    "internal",
+					Message: fmt.Sprintf("validator [%v] is expecting value of types: [%v] but got [%T] instead", validatorName, *validator.ValueTypes, value),
+				}
 			}
 		}
 
 		// run validatorName
-		err := validator.Validate(value, &option)
+		err := validator.Validate(value, option)
 		if err != nil {
 
 			// if error is default error, set default error in the validator

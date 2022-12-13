@@ -1,6 +1,8 @@
 package abolish
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var paramPlaceholder = ":param"
 var optionPlaceholder = ":option"

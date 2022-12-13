@@ -18,7 +18,7 @@ func main() {
 		fmt.Println("Error:", err)
 	}
 
-	err = ab.Validate[string]("", &rule)
+	err = ab.Validate[any](20, &rule)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}

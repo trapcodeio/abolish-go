@@ -1,6 +1,7 @@
 package abolish
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -8,7 +9,7 @@ import (
 var testValidator = Validator{
 	Name:  "required",
 	Error: &ValidationError{Message: ":param is required"},
-	Validate: func(value any, option *any) *ValidationError {
+	Validate: func(value any, option any) *ValidationError {
 		// check if value is nil
 		if value == nil {
 			return DefaultError
@@ -17,7 +18,14 @@ var testValidator = Validator{
 	},
 }
 
+func afterTest() {
+	fmt.Println("=== cleanup after test ===")
+	// remove validator
+	removeAllValidators()
+}
+
 func Test_HasValidator(t *testing.T) {
+
 	// check if validator exists
 	if HasValidator(testValidator.Name) {
 		t.Errorf("expecting [%v] but got [%v]", false, true)
@@ -33,9 +41,11 @@ func Test_HasValidator(t *testing.T) {
 	if !HasValidator(testValidator.Name) {
 		t.Errorf("expecting [%v] but got [%v]", true, false)
 	}
+
+	t.Cleanup(afterTest)
 }
 
-func Test_RegisterValidatorProcess(t *testing.T) {
+func Test_RegisterValidator(t *testing.T) {
 
 	t.Run("validator must have a name", func(t *testing.T) {
 		// check that error is thrown if name is empty
@@ -68,4 +78,28 @@ func Test_RegisterValidatorProcess(t *testing.T) {
 		}
 	})
 
+	t.Cleanup(afterTest)
+}
+
+func Test_RegisterValidators(t *testing.T) {
+	// register validators
+	err := RegisterValidators([]Validator{
+		{Name: "test1"},
+		{Name: "test2"},
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// check if validators exist
+	if !HasValidator("test1") {
+		t.Error("expecting validator to exist")
+	}
+
+	if !HasValidator("test2") {
+		t.Error("expecting validator to exist")
+	}
+
+	t.Cleanup(afterTest)
 }
