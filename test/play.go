@@ -2,6 +2,7 @@ package main
 
 import (
 	ab "abolish"
+	"abolish/validators"
 	"fmt"
 )
 
@@ -24,37 +25,9 @@ func main() {
 }
 
 func addValidators() {
-	// struct validator
-	err := ab.RegisterValidator(ab.Validator{
-		Name: "required",
-		Error: &ab.ValidationError{
-			Validator: "required",
-			Code:      "required",
-			Message:   "This field is required",
-		},
-		Validate: func(value any, option *any) *ab.ValidationError {
-			// check if value is nil
-			if value == nil {
-				return ab.DefaultError
-			}
-
-			return nil
-		},
-	})
-
-	// exact validator
-	err = ab.RegisterValidator(ab.Validator{
-		Name: "exact",
-		Validate: func(value any, option *any) *ab.ValidationError {
-
-			if value != *option {
-				return &ab.ValidationError{
-					Message: fmt.Sprintf("value must be exactly %v", *option),
-				}
-			}
-
-			return nil
-		},
+	err := ab.RegisterValidators([]ab.Validator{
+		validators.Required,
+		validators.Exact,
 	})
 
 	if err != nil {
