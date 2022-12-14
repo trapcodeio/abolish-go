@@ -48,3 +48,15 @@ var Exact = ab.Validator{
 		return nil
 	},
 }
+
+//var Max = ab.Validator{
+//	Name:  "max",
+//	Error: &ab.ValidationError{Message: ":param value must be less than :option"},
+//	Validate: func(value any, option any) *ab.ValidationError {
+//		// check if is number
+//		if !ab.IsNumber(value) && !ab.IsNumber(option) {
+//			return ab.DefaultError
+//		}
+//
+//	},
+//}

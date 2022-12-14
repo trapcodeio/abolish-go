@@ -8,20 +8,29 @@ import (
 )
 
 // Map - abolish map
-type Map map[string]interface{}
+type (
+	Map map[string]interface{}
+	// Any - abolish any
+	Any interface{}
+	// ValidatorFunc - abolish validator function
+	ValidatorFunc func(value any, option any) *ValidationError
 
-// Any - abolish any
-type Any interface{}
+	// ValidationError - abolish validation error
+	ValidationError struct {
+		Validator string // validator name
+		Code      string // error code
+		Message   string // error message
+	}
 
-// ValidatorFunc - abolish validator function
-type ValidatorFunc func(value any, option any) *ValidationError
-
-// ValidationError - abolish validation error
-type ValidationError struct {
-	Validator string // validator name
-	Code      string // error code
-	Message   string // error message
-}
+	// Validator - abolish validator
+	Validator struct {
+		Name        string
+		Validate    ValidatorFunc
+		Description string
+		Error       *ValidationError
+		ValueTypes  *[]string
+	}
+)
 
 // Error - return error message
 func (e ValidationError) Error() string {
@@ -32,15 +41,6 @@ func (e ValidationError) Error() string {
 // when returned in a validator, it will be replaced with the validator's error
 var DefaultError = &ValidationError{
 	Code: "__DEFAULT_ERROR__",
-}
-
-// Validator - abolish validator
-type Validator struct {
-	Name        string
-	Validate    ValidatorFunc
-	Description string
-	Error       *ValidationError
-	ValueTypes  *[]string
 }
 
 // validatorsMap - abolish validatorsMap map
